@@ -1,0 +1,38 @@
+<server description="Liberty server">
+
+  <featureManager>
+    <feature>ejb-3.2</feature>
+    <feature>jpaContainer-2.1</feature>
+    <feature>servlet-3.1</feature>
+    <feature>localConnector-1.0</feature>
+  </featureManager>
+
+  <jpa defaultPersistenceProvider="${third_party.javax.persistence.PersistenceProvider}" />
+  
+  <httpEndpoint httpPort="${default.http.port}" httpsPort="${default.https.port}" id="defaultHttpEndpoint" host="*" />
+
+  <!-- Derby Library Configuration -->    
+  <library id="derbyJDBCLib">
+      <fileset dir="${shared.resource.dir}" includes="derby*.jar"/>
+  </library>
+
+  <library id="global">
+      <!-- For Eclipselink, Comment out if using a different JPA provider> -->
+      <fileset dir="${third_party.jpa.persistence.provider.path}" includes="*.jar"/>
+      
+      <!-- For Hibernate, comment out if using a different JPA provider> -->
+      <!-- <fileset dir="${third_party.jpa.persistence.provider.path}/required" includes="*.jar" excludes="hibernate-jpa-*-api*.jar"/> -->
+  </library>
+  
+  <!-- Datasource Configuration -->
+  <dataSource id="jpaDataSource" jndiName="jdbc/jpaDataSource">
+      <jdbcDriver libraryRef="derbyJDBCLib" />
+      <properties.derby.embedded databaseName="TestDB" createDatabase="create"/>
+  </dataSource>
+
+    <logging  traceSpecification="JPA=all=enabled"
+traceFileName="trace.log"
+maxFileSize="2000"
+maxFiles="10"
+traceFormat="BASIC" />      
+</server>

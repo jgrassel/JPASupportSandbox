@@ -1,0 +1,226 @@
+////
+Copyright (c) 2019 IBM Corporation and others.
+Licensed under Creative Commons Attribution-NoDerivatives
+4.0 International (CC BY-ND 4.0)
+https://creativecommons.org/licenses/by-nd/4.0/
+
+Contributors:
+    IBM Corporation
+////
+
+= JPA Application Sandbox for Support
+
+*Requires:* Apache Maven 3.5.4 or higher, Java 8 or higher
+
+This sandbox has been provided as a means to speedily demonstrate a product problem
+with the JPA Runtime Integration or the JPA Persistence Provider supplied with the
+product.
+
+Because problem scenarios vary in complexity, the sandbox provides following maven projects:
+
+* simple-web-project
+* simple-ejb-project
+* simple-ejbWithJarLib-project
+* simple-webWithJarLib-project
+* actioned-web-project
+
+The above observe the following naming convention:
+  (actioned|simple)-(ejb|web)[withJarLib]-project
+
+Each project has its own maven groupId and artifactId to avoid conflicts with the other jpa sandbox projects.
+
+*Note:* The preferred project for demonstrating problems should be "simple-web-project", where test 
+logic is written into the SimpleTestServlet class, and JPA resources are packaged into the same 
+war module.  The ejb and JarLib projects are provided as a convenience to demonstrate issues
+requiring those configurations.
+
+== Actioned and Simple Projects
+
+Projects with the `simple` type leverage a simple managed component (an EJB or a Servlet)
+that is designed to demonstrate the problem in a simple and straightforward manner with
+a single request to the server.
+
+Projects with the `actioned` type are intended for more complex scenarios.  The EJB and 
+Servlets of actioned projects allow for the creation of "action methods", which are 
+presented for selection at the top of the web page.  This allows for the demonstration
+of issues where it is more desirable to present it in steps (a selectable sequence of 
+actions) instead of one single server request.  Actioned projects are somewhat more
+complex than simple projects, the process to add/modify/remove actions are documented 
+later.
+
+== EJB and Web Projects
+
+Simple projects leverages a simple EJB or Servlet to demonstrate the problem in a single step.
+
+* Simple EJB projects define a single Stateless EJB `ejb.TestEJB` with the `executeTest` 
+business method.  The `executeTest` business method is intended to be where the logic needed
+to demonstrate a product problem should reside.  The example offloads the logic to a 
+CommonTestCode helper class, but the body of the `executeTest` is usually sufficient to
+demonstrate an issue.  Unless the project is also a "WithJarLib" project, JPA entity
+classes, persistence.xml, and Object Relational Model XML files (ie orm.xml) should be
+packaged in the ejb module.  The EJB business method is driven by http requests against 
+the `SimpleTestServlet`.
+
+* Simple Web projects define a single Servlet 'web.SimpleTestServlet' with the `doGet` method
+defined as the location to place the logic needed to demonstrate a product problem.  Like
+the Simple EJB project, example offloads the logic to a CommonTestCode helper class, but the 
+body of the `doGet` method is usually sufficient to demonstrate an issue.  Unless the project 
+is also a "WithJarLib" project, JPA entity classes, persistence.xml, and Object Relational 
+Model XML files (ie orm.xml) should be packaged in the war module.
+
+== With Jar Library Projects  
+
+Projects with "WithJarLib" in the project name locate the JPA entity classes, persistence.xml,
+and object relational model files (such as orm.xml) in a library jar located in the ear's /lib
+directory (otherwise, the JPA assets are located in the managed component of interest (ejb or war).)
+The library jar is defined by a jar maven project.
+
+== Basic Maven Project Organization
+
+The sandbox projects are organized into the following Maven sub-projects:
+
+* ear - Enterprise Application 
+* ejb - EJB Project (only with ejb projects)
+* jpalib - JPA Library Project (only with WithJarLib projects)
+* war - Webapp Project
+
+== Building
+
+To build the sandbox, `cd` to the Maven root project and invoke:
+
+`mvn clean install`
+
+Which should finish cleanly:
+
+----
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary:
+[INFO] 
+[INFO] jpasandbox_simple_web 1.0-SNAPSHOT ................. SUCCESS [  0.239 s]
+[INFO] jpasandbox_simple_web.war .......................... SUCCESS [  1.494 s]
+[INFO] jpasandbox_simple_web.ear 1.0-SNAPSHOT ............. SUCCESS [  5.480 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time: 7.302 s
+[INFO] Finished at: 2019-06-05T14:23:53-05:00
+[INFO] ------------------------------------------------------------------------
+----
+
+== Starting the Server
+
+After building the project, start the WebSphere Liberty server.  You need to `cd` to the
+"ear" project directory to start the server:
+
+`cd ear` +
+`mvn liberty:start-server`
+
+Which should finish cleanly:
+
+----
+[INFO] CWWKM2001I: Invoke command is [/jpa_sandbox/simple-web-project/ear/target/liberty/wlp/bin/server, start, defaultServer].
+[INFO] 
+[INFO] Starting server defaultServer.
+[INFO] Server defaultServer started with process ID 75344.
+[INFO] Waiting up to 30 seconds for server confirmation:  CWWKF0011I to be found in /jpa_sandbox/simple-web-project/ear/target/liberty/wlp/usr/servers/defaultServer/logs/messages.log
+[INFO] CWWKM2010I: Searching for CWWKF0011I in /jpa_sandbox/simple-web-project/ear/target/liberty/wlp/usr/servers/defaultServer/logs/messages.log. This search will timeout after 30 seconds.
+[INFO] CWWKM2015I: Match number: 1 is [6/5/19 14:24:41:584 CDT] 0000001c com.ibm.ws.kernel.feature.internal.FeatureManager            A CWWKF0011I: The defaultServer server is ready to run a smarter planet. The defaultServer server started in 5.917 seconds..
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time: 6.846 s
+[INFO] Finished at: 2019-06-05T14:24:41-05:00
+[INFO] ------------------------------------------------------------------------
+----
+
+== Running the tests
+
+With the server brought online with the previous steps, the test servlet can be accessed with the URL:
+
+* Simple Projects: *`http://localhost:9080/jpatest/SimpleTestServlet`*
+* Actioned Projects: *`http://localhost:9080/jpatest/ActionedTestServlet`*
+
+== Stopping the server
+
+The server should be shut down when the demonstration has been completed, or if code has been changed
+and the project needs to be rebuilt.  The command to shut down the Liberty server must be invoked in
+the ear project directory (the same as with starting the server) using the following command:
+
+`mvn liberty:stop-server`
+
+Which should finish cleanly:
+
+----
+[INFO] CWWKM2001I: Invoke command is [/jpa_sandbox/simple-web-project/ear/target/liberty/wlp/bin/server, stop, defaultServer].
+[INFO] 
+[INFO] Stopping server defaultServer.
+[INFO] Server defaultServer stopped.
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time: 2.145 s
+[INFO] Finished at: 2019-06-05T14:26:03-05:00
+[INFO] ------------------------------------------------------------------------
+----
+
+= Modifying the Actioned Projects
+
+== Adding actions to the test application
+
+The ActionedTestServlet servlet exposes "actions" which are listed at the top of the page, which execute methods on
+the ActionedTestServlet servlet.  The purpose of the actions are to provide a means to step-by-step demonstrate
+a problem, including the means to setup and pre-populate the database before demonstrating the problem.  They could
+easily be utilized to demonstrate alternative execution pathways, etc.
+
+The ActionedTestServlet servlet, as shipped, comes with two actions, `prepopulate` and `query`.  The prepopulate 
+action inserts several rows into the database (through JPA operations involving EntityA).  The
+new rows are printed to the web page.
+
+The query action fetches all existing rows of table EntityA by issuing a general query for the entity EntityA, and prints the result of the query to the web page.
+
+The existing actions can be modified in any way that you see fit to demonstrate an issue.  You can also
+add new actions (or rename existing ones).  The Set `actionSet` maintains a registry of known actions:
+
+[source,java]
+----
+public class ActionedTestServlet extends HttpServlet {
+    private final static String sname = "WebAccess: ";
+
+    private final static Class<?> sCls = ActionedTestServlet.class;
+    private final static Set<String> actionSet = new HashSet<String>();
+    static {
+        actionSet.add("populate");
+        actionSet.add("query");
+    }
+----
+
+In the above, there are two actions, `populate` and `query`.  New actions can be added, existing actions 
+can be renamed or deleted, by changing the code in the static block.
+
+Action methods must be a member of the ActionedTestServlet class, must use the same name as the String entry
+added to `actionSet`, must be `public`, and must take `HttpServletRequest` and `HttpServletResponse` as 
+method parameters.  For example, the query action uses the following method body:
+
+[source,java]
+----
+    /*
+     * One sample action to demonstrate a problem.
+     */
+    @SuppressWarnings("unused")
+    public void query(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        final PrintWriter pw = response.getWriter();
+        em.clear();
+
+        TypedQuery<EntityA> q = em.createQuery("SELECT a FROM EntityA a", EntityA.class);
+        List<EntityA> retList = q.getResultList();
+
+        dumpList(retList, em, pw);
+    }
+----
+
+This design is intended to provide a fast and easy means to demonstrate a problem that the 
+WebSphere development lab can use to efficiently analyze.  The provided architecture is a convenience,
+you are encouraged to modify it as you see fit if it is insufficient to demonstrate the issue.
+
+
+

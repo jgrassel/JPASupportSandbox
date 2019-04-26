@@ -1,0 +1,32 @@
+<server description="Liberty server">
+
+  <featureManager>
+    <feature>ejb-3.2</feature>
+    <feature>jpa-2.1</feature>
+    <feature>servlet-3.1</feature>
+    <feature>localConnector-1.0</feature>
+  </featureManager>
+
+  <httpEndpoint httpPort="${default.http.port}" httpsPort="${default.https.port}" id="defaultHttpEndpoint" host="*" />
+
+  <!-- Derby Library Configuration -->    
+  <library id="derbyJDBCLib">
+      <fileset dir="${shared.resource.dir}" includes="derby*.jar"/>
+  </library>
+
+  <!-- Datasource Configuration -->
+  <dataSource id="jpaDataSource" jndiName="jdbc/jpaDataSource">
+      <jdbcDriver libraryRef="derbyJDBCLib" />
+      <properties.derby.embedded databaseName="TestDB" createDatabase="create"/>
+  </dataSource>
+
+  <enterpriseApplication id="ear-1.0-SNAPSHOT.ear"
+    location="ear-1.0-SNAPSHOT.ear" 
+    name="ear-1.0-SNAPSHOT.ear" />
+
+    <logging  traceSpecification="JPA=all=enabled"
+traceFileName="trace.log"
+maxFileSize="2000"
+maxFiles="10"
+traceFormat="BASIC" />      
+</server>
